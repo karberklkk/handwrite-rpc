@@ -35,6 +35,23 @@
    - 若本机有其他 JDK，Runner JRE 选 17+ 即可
 4. 右上角 Maven 面板能展开 5 个模块（parent/rpc-api/rpc-common/rpc-core/example）即成功
 
+> 你机器实测装的是 **VS Code**（未装 IDEA），用第 3.5 节即可。
+
+## 3.5 VS Code 开发 Java 多模块项目（你机器当前方案）
+
+**需要装的扩展**（扩展市场搜名字即可）：
+- `Extension Pack for Java`（微软官方合集，包含语言服务、调试器、Maven 支持、测试）
+- 装完右下角提示 Reload / 等它自动下载 JDK 语言服务器
+
+**打开与操作**：
+```powershell
+code "C:\Users\L8619\Desktop\work place\handwrite-rpc"   # 在 VS Code 打开项目
+```
+- 左侧 Explorer 展开各模块的 `src/main/java` 写代码
+- 右侧或命令面板（`Ctrl+Shift+P` → `Maven: ...`）可执行 `clean package`
+- 写 main 方法后，点方法上方的 **Run** 直接运行；或终端里 `mvn -pl example -am compile` 编译
+- 首次打开会让 Java 扩展建索引，稍等即可；若报 `Java runtime not found`，在设置里把 Java 指向 `D:\jdk-26_windows-x64_bin\jdk-26.0.2.1`
+
 **纯命令行跑构建（不依赖 IDE）：**
 ```powershell
 cd "C:\Users\L8619\Desktop\work place\handwrite-rpc"

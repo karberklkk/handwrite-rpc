@@ -30,7 +30,7 @@ handwrite-rpc
 
 ## 里程碑进度
 
-- [ ] M0 环境与工程骨架（多模块构建通过、GitHub 建仓）
+- [x] M0 环境与工程骨架（多模块构建通过、GitHub 建仓）
 - [ ] M1 动态代理 + 本地"伪 RPC"打通调用链路
 - [ ] M2 Netty 通信 + 自定义协议（解决粘包/半包、同步转异步）
 - [ ] M3 服务注册与发现（本地注册中心 → ZooKeeper）
@@ -38,7 +38,7 @@ handwrite-rpc
 - [ ] M5 SPI 可插拔扩展 + 心跳保活 + 优雅停机
 - [ ] M6 压测、文档、简历收尾（README 补全 + 面试 QA 30 问）
 
-> 详细周计划见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，架构设计见 [`docs/DESIGN.md`](docs/DESIGN.md)，环境搭建见 [`docs/SETUP.md`](docs/SETUP.md)，学习笔记见 [`docs/NOTES.md`](docs/NOTES.md)。
+> 详细周计划见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，架构设计见 [`docs/DESIGN.md`](docs/DESIGN.md)，环境搭建见 [`docs/SETUP.md`](docs/SETUP.md)，学习笔记见 [`docs/NOTES.md`](docs/NOTES.md)，M1 概念导览见 [`docs/M1-GUIDE.md`](docs/M1-GUIDE.md)。
 
 ## 快速开始
 
