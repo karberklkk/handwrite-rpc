@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.handwrite</groupId>
+        <artifactId>handwrite-rpc</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rpc-common</artifactId>
+    <name>rpc-common</name>
+    <description>通用层：协议常量、工具类、扩展点接口（序列化 / 注册中心 / 负载均衡 SPI 定义）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.handwrite</groupId>
+            <artifactId>rpc-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

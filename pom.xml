@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.handwrite</groupId>
+    <artifactId>handwrite-rpc</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>handwrite-rpc</name>
+    <description>从零手写一个迷你 RPC 框架（学习 / 求职项目，目标：能讲透每一行代码）</description>
+
+    <modules>
+        <module>rpc-api</module>
+        <module>rpc-common</module>
+        <module>rpc-core</module>
+        <module>example</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 本机 JDK 是 26，但发布目标统一用 17（LTS，主流公司版本），通过 maven.compiler.release 向下兼容 -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <!-- Netty 4.1.x：教程资料最多、业界使用最广；若在 JDK26 下出现兼容问题，可升 4.2.17.Final -->
+        <netty.version>4.1.136.Final</netty.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
