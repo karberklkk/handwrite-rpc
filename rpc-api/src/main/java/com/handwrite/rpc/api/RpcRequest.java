@@ -5,6 +5,8 @@ import java.io.Serializable;
 public class RpcRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    // 请求唯一标识(M2-2 协议头里携带);响应会回填同一个值,用于"哪个响应对应哪次调用"
+    private long requestId;
     // 调哪个服务(建议存接口全限定名,如 com.handwrite.rpc.example.HelloService)
     private String serviceName;
     // 调哪个方法
@@ -13,6 +15,14 @@ public class RpcRequest implements Serializable {
     private Class<?>[] parameterTypes;
     // 实参数组
     private Object[] parameters;
+
+    public long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(long requestId) {
+        this.requestId = requestId;
+    }
 
         public RpcRequest() {
     }

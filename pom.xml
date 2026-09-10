@@ -29,9 +29,20 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- 注意:netty-all 在 4.1.136 里是空壳 jar(不含类),必须按模块依赖 -->
             <dependency>
                 <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
+                <artifactId>netty-transport</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
                 <version>${netty.version}</version>
             </dependency>
         </dependencies>

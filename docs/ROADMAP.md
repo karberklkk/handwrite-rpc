@@ -68,29 +68,28 @@
 
 ## M2 Netty 通信 + 自定义协议（第 3–4 周，本周最重）
 
-**3a（半天）先用纯 Socket 打通跨进程**
-用 `ServerSocket/Socket` + `ObjectOutputStream` 做单连接请求-响应；此时你会直观撞上"粘包"和"同步阻塞"问题 —— 这些坑是后面理解 Netty 的铺垫，**先记录你遇到的坑**。
+**3a（半天）先用纯 Socket 打通跨进程** —— ✅ 已并入 M2-1 用 Netty 直接实现(见 `example/ServerDemo`、`ClientDemo`)
 
-**3b 引入 Netty**
-`ServerBootstrap` / `EventLoopGroup`（boss+worker） / `ChannelInitializer` 装配 pipeline / 服务端反射执行并回写。
+**3b 引入 Netty** —— ✅ 已完成(`transport/NettyServer`、`NettyClient`、`RpcRequestHandler`)
 
-**3c 自定义协议（自己定，写进 `docs/PROTOCOL.md` 并画图）**
+**3c 自定义协议** —— ✅ **设计稿已完成:[`PROTOCOL.md`](PROTOCOL.md)**(17 字节定长头:魔数/版本/类型/序列化/requestId/长度;含常量定义、编解码流程、验收标准)
 参考 Dubbo / guide-rpc 的思路自行设计，例如：
 ```
 魔数(4B) | 版本(1B) | 消息类型(1B: request/response/heartbeat) | 序列化类型(1B)
 | requestId(8B) | body长度(4B) | body(变长)
 ```
 
-**3d 编解码器**
+**3d 编解码器** —— ✅ 已完成(`transport/RpcEncoder`、`RpcDecoder` + `LengthFieldBasedFrameDecoder`)
 - 入站用 `LengthFieldBasedFrameDecoder` 解决 TCP 粘包/半包
 - 自己写 Encoder / Decoder（注意 `ByteBuf` 引用计数释放、异常传播、handler 顺序）
 - 不同消息类型（请求/响应/心跳）如何分发
 
-**3e 同步调用的异步化（最核心的难点）**
+**3e 同步调用的异步化（最核心的难点）** —— ✅ 已完成(requestId + `Map<Long, CompletableFuture<RpcResponse>>`,连接复用)
 问题：RPC 是异步收包的，但调用方要同步拿结果。
 方案：每个请求带唯一 `requestId`；客户端持 `Map<requestId, CompletableFuture/RpcFuture>`；收到响应后按 id 找到对应的 future 并 complete；调用方在 future 上等待。
 
-**验收**：provider 与 consumer 各自独立进程（两个 main）可互调；循环调用 1w 次无异常；日志能看到编解码与响应匹配。
+**验收** ✅:provider 与 consumer 各自独立进程互调成功;顺序 1000 次 0 错配(1.08ms/次);**并发 10 线程 × 500 次 = 5000 次调用 0 错配、0 异常,吞吐约 2100 次/秒**;非法魔数被拒且服务端存活。
+**已完成产物**:`ServerDemo` / `ClientDemo` / `ProtocolVerifyDemo` / `ConcurrentVerifyDemo`;`RpcLogger` 支持 `-Drpc.trace=false` 关闭 trace 日志。
 **学习要点**：Netty 线程模型（EventLoop、pipeline、handler 执行线程）、ByteBuf、粘包半包、Future/Promise、Channel 复用与并发安全。
 **面试弹药**：粘包半包为什么出现、怎么解决？Netty 为什么比 BIO 快（多路复用/零拷贝/线程模型）？为什么自己造协议而不是直接传对象？
 
