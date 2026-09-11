@@ -3,7 +3,7 @@ package com.handwrite.rpc.core.transport;
 import com.handwrite.rpc.api.RpcRequest;
 import com.handwrite.rpc.api.RpcResponse;
 import com.handwrite.rpc.common.RpcLogger;
-import com.handwrite.rpc.core.registry.ServiceRegistry;
+import com.handwrite.rpc.core.registry.ServiceProvider;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -19,10 +19,10 @@ import java.lang.reflect.Method;
  */
 public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
-    private final ServiceRegistry serviceRegistry;
+    private final ServiceProvider serviceProvider;
 
-    public RpcRequestHandler(ServiceRegistry serviceRegistry) {
-        this.serviceRegistry = serviceRegistry;
+    public RpcRequestHandler(ServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         RpcResponse response;
         try {
             // 1) 按服务名找实现对象
-            Object service = serviceRegistry.getService(request.getServiceName());
+            Object service = serviceProvider.getService(request.getServiceName());
             if (service == null) {
                 response = new RpcResponse(null, "没有找到服务: " + request.getServiceName());
             } else {

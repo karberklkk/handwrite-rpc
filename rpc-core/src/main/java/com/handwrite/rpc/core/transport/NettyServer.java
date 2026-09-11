@@ -1,7 +1,7 @@
 package com.handwrite.rpc.core.transport;
 
 import com.handwrite.rpc.common.RpcConstants;
-import com.handwrite.rpc.core.registry.ServiceRegistry;
+import com.handwrite.rpc.core.registry.ServiceProvider;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -22,11 +22,11 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 public class NettyServer {
 
     private final int port;
-    private final ServiceRegistry serviceRegistry;
+    private final ServiceProvider serviceProvider;
 
-    public NettyServer(int port, ServiceRegistry serviceRegistry) {
+    public NettyServer(int port, ServiceProvider serviceProvider) {
         this.port = port;
-        this.serviceRegistry = serviceRegistry;
+        this.serviceProvider = serviceProvider;
     }
 
     /**
@@ -56,7 +56,7 @@ public class NettyServer {
                                             0,   // lengthAdjustment:长度值就是 body 长度
                                             0))  // initialBytesToStrip:不剥离头,交给 RpcDecoder 解析
                                     .addLast(new RpcDecoder())
-                                    .addLast(new RpcRequestHandler(serviceRegistry));
+                                    .addLast(new RpcRequestHandler(serviceProvider));
                         }
                     });
             ChannelFuture future = bootstrap.bind(port).sync();

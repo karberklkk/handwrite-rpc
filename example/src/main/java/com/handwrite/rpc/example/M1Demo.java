@@ -1,7 +1,7 @@
 package com.handwrite.rpc.example;
 
 import com.handwrite.rpc.core.proxy.RpcClientProxy;
-import com.handwrite.rpc.core.registry.ServiceRegistry;
+import com.handwrite.rpc.core.registry.ServiceProvider;
 
 /**
  * M1 验收演示(单进程伪 RPC):
@@ -14,13 +14,13 @@ import com.handwrite.rpc.core.registry.ServiceRegistry;
 public class M1Demo {
 
     public static void main(String[] args) {
-        // ===== Provider 侧:注册服务实现 =====
-        ServiceRegistry registry = new ServiceRegistry();
-        registry.register(HelloService.class.getName(), new HelloServiceImpl());
-        System.out.println("[Provider] 已注册服务数: " + registry.size());
+        // ===== Provider 侧:把服务实现放进本地持有表 =====
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.register(HelloService.class.getName(), new HelloServiceImpl());
+        System.out.println("[Provider] 已注册服务数: " + serviceProvider.size());
 
         // ===== Consumer 侧:通过代理像本地方法一样调用 =====
-        RpcClientProxy proxyFactory = new RpcClientProxy(registry);
+        RpcClientProxy proxyFactory = new RpcClientProxy(serviceProvider);
         HelloService helloService = proxyFactory.getProxy(HelloService.class);
 
         String result = helloService.sayHello("handwrite-rpc");
