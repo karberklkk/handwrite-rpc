@@ -3,6 +3,7 @@ package com.handwrite.rpc.core.transport;
 import com.handwrite.rpc.common.RpcConstants;
 import com.handwrite.rpc.core.registry.ServiceProvider;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -13,28 +14,50 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 /**
- * M2-1 Provider 端 Netty 服务器:
- * 监听端口,收到 RpcRequest 后交给 RpcRequestHandler 反射执行,回写 RpcResponse。
+ * Provider 端 Netty 服务器(M2 建立;M3 补上优雅停机与地址暴露)。
  *
- * 说明(M2-1 简化):这里直接用 Netty 自带的 ObjectEncoder/ObjectDecoder
- * 完成"JDK 序列化 + 长度切帧";M2-2 会替换成自研协议头 + 自研编解码器。
+ * 流水线(入站按 addLast 顺序):
+ *   字节 → LengthFieldBasedFrameDecoder(按 length 切帧) → RpcDecoder(解协议) → RpcRequestHandler(反射执行)
+ *
+ * ⚠️ 出站方向是相反的(事件从 tail 往 head 走),所以写在最前面的 RpcEncoder
+ *    反而是出站时【最后一个】被执行到的 —— 这正好是我们要的顺序。
  */
 public class NettyServer {
 
     private final int port;
     private final ServiceProvider serviceProvider;
 
+    // 改成字段:这样 close() 才拿得到它们(原来是 start() 里的局部变量)
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
+    private volatile Channel channel;
+
     public NettyServer(int port, ServiceProvider serviceProvider) {
         this.port = port;
         this.serviceProvider = serviceProvider;
     }
 
+    /** 本机监听地址 —— 注册中心里报上去的就是它 */
+    public String localAddress() {
+        return "127.0.0.1:" + port;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    /** 服务器是否已在监听 */
+    public boolean isRunning() {
+        return channel != null && channel.isActive();
+    }
+
     /**
-     * 启动并阻塞(Provider 是长驻进程)
+     * 启动并【阻塞】(Provider 是长驻进程)。
+     * 想让它返回,只能从另一个线程调用 close()。
      */
     public void start() throws InterruptedException {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);   // 领位员:接受新连接
-        EventLoopGroup workerGroup = new NioEventLoopGroup();  // 服务员:处理连接上的 IO
+        bossGroup = new NioEventLoopGroup(1);    // 领位员:只负责 accept 新连接
+        workerGroup = new NioEventLoopGroup();   // 服务员:处理已连接上的 IO
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
@@ -44,28 +67,58 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-                            // 流水线(M2-2 自研协议):
-                            // 出站:业务 → RpcEncoder → 字节
-                            // 入站:字节 → 按长度切帧 → RpcDecoder 解析头并反序列化 → 业务处理器
                             ch.pipeline()
                                     .addLast(new RpcEncoder())
                                     .addLast(new LengthFieldBasedFrameDecoder(
                                             RpcConstants.MAX_FRAME_LENGTH,
                                             RpcConstants.LENGTH_FIELD_OFFSET,
                                             RpcConstants.LENGTH_FIELD_LENGTH,
-                                            0,   // lengthAdjustment:长度值就是 body 长度
-                                            0))  // initialBytesToStrip:不剥离头,交给 RpcDecoder 解析
+                                            0,
+                                            0))
                                     .addLast(new RpcDecoder())
                                     .addLast(new RpcRequestHandler(serviceProvider));
                         }
                     });
+
             ChannelFuture future = bootstrap.bind(port).sync();
-            System.out.println("[NettyServer] 启动成功,监听端口: " + port);
-            // 阻塞,直到服务器关闭
-            future.channel().closeFuture().sync();
+            channel = future.channel();
+            System.out.println("[NettyServer] 启动成功,监听地址: " + localAddress());
+
+            // 阻塞在这里,直到 channel 被关闭
+            channel.closeFuture().sync();
         } finally {
+            shutdownGroups();
+        }
+    }
+
+    /**
+     * 优雅停机(M3 新增)。
+     *
+     * 停不下来的原因在于:start() 是【阻塞】的,它自己没办法"退出"。
+     * 所以必须从另一个线程调 close() —— ServerDemo 正是通过
+     * JVM shutdown hook(Ctrl+C 时由 JVM 触发)来做这件事。
+     *
+     * 做了两件事:
+     *   1. 关闭监听 channel      → 不再接受新连接
+     *   2. 释放两个线程组         → 回收 Netty 的线程资源
+     */
+    public void close() {
+        Channel ch = channel;
+        if (ch != null) {
+            ch.close();          // 这一步会让 start() 里的 closeFuture().sync() 返回
+        }
+        shutdownGroups();
+    }
+
+    /** 释放线程组(置空,保证重复调用安全) */
+    private void shutdownGroups() {
+        if (bossGroup != null) {
             bossGroup.shutdownGracefully();
+            bossGroup = null;
+        }
+        if (workerGroup != null) {
             workerGroup.shutdownGracefully();
+            workerGroup = null;
         }
     }
 }

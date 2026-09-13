@@ -4,6 +4,8 @@ import com.handwrite.rpc.api.RpcRequest;
 import com.handwrite.rpc.api.RpcResponse;
 import com.handwrite.rpc.common.RpcConstants;
 import com.handwrite.rpc.common.RpcLogger;
+import com.handwrite.rpc.common.exception.RpcException;
+import com.handwrite.rpc.common.exception.RpcTimeoutException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -119,12 +121,19 @@ public class NettyClient {
             return response;
 
         } catch (TimeoutException e) {
-            throw new RuntimeException("RPC 调用超时(" + timeoutMillis + "ms): "
+            // M4:超时单独用 RpcTimeoutException 抛出。
+            // 上层的 Failover 策略靠它判断"这种情况【不能】重试":
+            // 请求可能已经在服务端执行完了,只是响应没回来,重试 = 可能重复执行。
+            throw new RpcTimeoutException("RPC 调用超时(" + timeoutMillis + "ms): "
                     + request.getServiceName() + "#" + request.getMethodName()
-                    + ", requestId=" + requestId);
+                    + ", requestId=" + requestId, timeoutMillis);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            throw cause instanceof Exception ? (Exception) cause : new RuntimeException(cause);
+            if (cause instanceof RpcException already) {
+                throw already;                       // 已经是 RPC 自己的异常,原样上抛
+            }
+            throw new RpcException("远程调用异常: "
+                    + (cause == null ? e.getMessage() : cause.getMessage()), cause);
         } finally {
             // 4) 无论成功、超时还是异常都要移除,避免 Map 无限增长(内存泄漏)
             pendingRequests.remove(requestId);
