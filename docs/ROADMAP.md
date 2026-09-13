@@ -97,6 +97,12 @@
 
 ## M3 服务注册与发现（第 5 周）
 
+> ✅ **进度（2026-09-13）**：第 1–3 步已完成并推送（提交 `39f3381`）。
+> 第 4 步 ZooKeeper **待做**（需先准备 curator 依赖 + 本机 ZK 服务）。
+> 验收：`M3LocalDemo` **5/5 PASS** —— discover 能拿到地址、地址内容正确、
+> 三次真网络调用成功、查不存在的服务抛 `RpcException`（不是 NPE）、注销后 discover 为空。
+> 📄 设计说明与面试问答见 [`M3-M4-实现报告.md`](M3-M4-实现报告.md)
+
 **任务**
 1. 在 `rpc-common` 抽象接口：`ServiceRegistry`（register/unregister）、`ServiceDiscovery`（discover，返回可用地址列表）
 2. 本地实现：`ConcurrentHashMap<String, Set<URL>>` —— 先跑通单机
@@ -112,6 +118,13 @@
 ---
 
 ## M4 负载均衡 + 容错 + 超时（第 6 周）
+
+> ✅ **进度（2026-09-13）**：已完成并推送（提交 `39f3381`）。
+> 验收：`M4LoadBalanceDemo` **5/5 PASS** ——
+> 三种策略分布 Random 9/10/11、RoundRobin 10/10/10、ConsistentHash 18/8/4；
+> 一致性哈希同一 key 连续 10 次落同一台；轮询呈固定循环；
+> **Failfast 失败 5/20，Failover 失败 0/20**。
+> 📄 设计说明与面试问答见 [`M3-M4-实现报告.md`](M3-M4-实现报告.md)
 
 **任务**
 1. `LoadBalancer` 接口：Random / RoundRobin / **一致性哈希**（带虚拟节点），注册中心返回多个地址时选择其一
